@@ -2,5 +2,4 @@ kurigram
 python-dotenv
 tgcrypto
 uvloop
-instagrapi
 urllib3<2
