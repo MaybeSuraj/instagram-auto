@@ -7,10 +7,12 @@ from typing import Any, Callable, TypeVar, Union
 
 _T = TypeVar("_T")
 
+_ig_lock = asyncio.Lock()
 
-async def _call_ig_client(func: Callable[..., _T], *args: Any) -> _T:
-    async with asyncio.Lock():
-        return await asyncio.to_thread(func, *args)
+
+async def _call_ig_client(func: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
+    async with _ig_lock:
+        return await asyncio.to_thread(func, *args, **kwargs)
 
 
 async def download_reel(

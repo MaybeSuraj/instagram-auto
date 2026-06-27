@@ -7,8 +7,7 @@ from typing import Optional
 
 from app import igClient
 from app.utils import INSTAGRAM_URL_RE, download_reel, make_progress_callback
-
-from instagrapi.types import Media
+from app.utils.instagram import _call_ig_client
 
 
 def extract_instagram_url(message: Message) -> Optional[str]:
@@ -77,7 +76,11 @@ async def handle_upload(client: Client, message: Message):
 
         await sending_message.edit_text("Uploading video to Instagram...")
 
-        uploaded_media: Media = igClient.video_upload(
+        # video_upload is entirely synchronous (HTTP POST + time.sleep loops).
+        # Running it directly on the event loop would block Pyrogram's
+        # ping_worker for 30+ seconds, causing Telegram to drop the connection.
+        uploaded_media = await _call_ig_client(
+            igClient.video_upload,
             video_path,
             caption=caption[:1024],
         )
@@ -90,5 +93,7 @@ async def handle_upload(client: Client, message: Message):
     finally:
         if video_path is not None:
             with suppress(Exception):
-                Path(video_path).unlink(missing_ok=True)
-                Path(video_path).with_suffix(".jpg").unlink(missing_ok=True)
+                video_file = Path(video_path)
+                thumbnail_file = Path(f"{video_file}.jpg")
+                video_file.unlink(missing_ok=True)
+                thumbnail_file.unlink(missing_ok=True)

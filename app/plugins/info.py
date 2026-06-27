@@ -2,6 +2,7 @@ import env
 from pyrogram import Client, filters
 from app import igClient
 from app.utils import INSTAGRAM_URL_RE
+from app.utils.instagram import _call_ig_client
 
 
 @Client.on_message(filters.command("info") & filters.private & env.owner_filter)
@@ -17,8 +18,10 @@ async def handle_info(client: Client, message):
 
     try:
         replied_message = await message.reply_text("Fetching video info...")
-        media_pk = igClient.media_pk_from_url(video_url)
-        media_info = igClient.media_info_v1(media_pk)
+        # Route through _call_ig_client so these blocking calls run in a
+        # thread pool worker and don't starve Pyrogram's ping_worker.
+        media_pk = await _call_ig_client(igClient.media_pk_from_url, video_url)
+        media_info = await _call_ig_client(igClient.media_info_v1, media_pk)
 
         info_text = "** Info:**\n\n"
         info_text += f"**ID:** {media_info.pk}\n"

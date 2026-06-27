@@ -1,12 +1,20 @@
 import env
 import sys
+import uvloop
 import asyncio
 from logger import LOGGER
 from pathlib import Path
 from pyrogram import Client
 from instagrapi import Client as IGClient
 
-loop = asyncio.get_event_loop()
+uvloop.install()
+
+
+# Expose the running loop.  On Python 3.10+ this is equivalent to
+# asyncio.get_event_loop() but we defer it until after uvloop.install().
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+
 botname = ""
 botusername = ""
 
@@ -63,7 +71,3 @@ async def initiate_ig_client():
         LOGGER(__name__).error(f"\033[31m{e}")
         sys.exit(0)
     LOGGER(__name__).info("INSTAGRAM CLIENT STARTED")
-
-
-loop.run_until_complete(initiate_tg_bot())
-loop.run_until_complete(initiate_ig_client())

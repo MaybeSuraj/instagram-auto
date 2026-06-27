@@ -1,7 +1,6 @@
-import uvloop
 from pyrogram import idle
 from logger import LOGGER
-from app import bot, botname, loop
+from app import bot, botname, loop, initiate_tg_bot, initiate_ig_client
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 
@@ -29,11 +28,11 @@ def run():
     httpd.serve_forever()
 
 
-uvloop.install()
-
-
-async def initiate_bot():
+async def main():
+    """Single async entry-point that starts both clients on the uvloop loop."""
     LOGGER(__name__).info("Starting Bot")
+    await initiate_tg_bot()
+    await initiate_ig_client()
     await idle()
     await bot.stop()
     LOGGER(__name__).info(f"{botname} IS STOPPED")
@@ -45,5 +44,5 @@ if __name__ == "__main__":
     server_thread.daemon = True  # This makes sure the thread will exit when the main
     # program exits
     server_thread.start()
-    loop.run_until_complete(initiate_bot())
+    loop.run_until_complete(main())
     LOGGER(__name__).info(f"{botname} IS STOPPED")
